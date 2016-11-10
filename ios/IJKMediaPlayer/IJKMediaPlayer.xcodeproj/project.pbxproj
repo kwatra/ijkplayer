@@ -8,7 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		50664F591DD30AA700107747 /* ffmpeg_player.m in Sources */ = {isa = PBXBuildFile; fileRef = 50664F571DD30AA700107747 /* ffmpeg_player.m */; };
-		50664F5A1DD30AA700107747 /* ffmpeg_player.h in Headers */ = {isa = PBXBuildFile; fileRef = 50664F581DD30AA700107747 /* ffmpeg_player.h */; };
+		50664F5A1DD30AA700107747 /* ffmpeg_player.h in Headers */ = {isa = PBXBuildFile; fileRef = 50664F581DD30AA700107747 /* ffmpeg_player.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		54A029B61D4700E6001C61C1 /* ijkasync.c in Sources */ = {isa = PBXBuildFile; fileRef = 54A029B11D4700E6001C61C1 /* ijkasync.c */; };
 		54A029B71D4700E6001C61C1 /* ijkavformat.h in Headers */ = {isa = PBXBuildFile; fileRef = 54A029B21D4700E6001C61C1 /* ijkavformat.h */; };
 		54A029B81D4700E6001C61C1 /* ijklongurl.c in Sources */ = {isa = PBXBuildFile; fileRef = 54A029B31D4700E6001C61C1 /* ijklongurl.c */; };

@@ -40,7 +40,6 @@
 #import <Foundation/Foundation.h>
 
 #include "IJKVideoToolBox.h"
-#include "h264_sps_parser.h"
 
 /* options specified by the user */
 static int audio_disable = 0;
@@ -261,6 +260,13 @@ static int init_stream_for_type(FFVideoState *is, int stream_index, int stream_t
 static int vtbformat_init_my(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar) {
     return vtbformat_init_wrapper(fmt_desc, codecpar);
 }
+
+// Copied from h264_sps_parser.h
+#define AV_RB24(x)                          \
+((((const uint8_t*)(x))[0] << 16) |        \
+(((const uint8_t*)(x))[1] <<  8) |        \
+((const uint8_t*)(x))[2])
+
 
 static CMSampleBufferRef create_sample_buffer(VTBFormatDesc* fmt_desc, const AVPacket *avpkt) {
     CMSampleBufferRef sample_buff   = NULL;
