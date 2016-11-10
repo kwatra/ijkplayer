@@ -1249,6 +1249,7 @@ static int queue_picture(FFPlayer *ffp, AVFrame *src_frame, double pts, double d
         // FIXME use direct rendering
         av_image_copy(data, linesize, (const uint8_t **)src_frame->data, src_frame->linesize,
                         src_frame->format, vp->width, vp->height);
+        ALOGD("NKSG: ======================================================"\n");
 #else
         // sws_getCachedContext(...);
 #endif

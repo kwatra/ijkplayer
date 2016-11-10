@@ -58,14 +58,6 @@ typedef struct sort_queue {
     volatile struct sort_queue *nextframe;
 } sort_queue;
 
-typedef struct VTBFormatDesc
-{
-    CMFormatDescriptionRef      fmt_desc;
-    int32_t                     max_ref_frames;
-    bool                        convert_bytestream;
-    bool                        convert_3byteTo4byteNALSize;
-} VTBFormatDesc;
-
 struct VideoToolBoxContext {
     FFPlayer                   *ffp;
     volatile bool               refresh_request;
@@ -283,7 +275,9 @@ static CMSampleBufferRef CreateSampleBufferFrom(CMFormatDescriptionRef fmt_desc,
     }
 }
 
-
+CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size) {
+    return CreateSampleBufferFrom(fmt_desc, demux_buff, demux_size);
+}
 
 
 static bool GetVTBPicture(VideoToolBoxContext* context, AVFrame* pVTBPicture)
@@ -332,6 +326,22 @@ void VTDecoderCallback(void *decompressionOutputRefCon,
                        CMTime presentationDuration)
 {
     @autoreleasepool {
+        ALOGI("NKSG: VTDecoderCallback. time: %lld\n", presentationTimeStamp.value);
+        
+        
+        /*
+        av_usleep((int)(int64_t)(0.04 * 1000000.0));
+        {
+        sample_info *sample_info = sourceFrameRefCon;
+        VideoToolBoxContext *ctx = (VideoToolBoxContext*)decompressionOutputRefCon;
+        sample_info_recycle(ctx, sample_info);
+        }
+        return;
+         */
+        
+        
+        
+        
         VideoToolBoxContext *ctx = (VideoToolBoxContext*)decompressionOutputRefCon;
         if (!ctx)
             return;
@@ -455,6 +465,7 @@ void VTDecoderCallback(void *decompressionOutputRefCon,
         pthread_mutex_lock(&ctx->m_queue_mutex);
         volatile sort_queue *queueWalker = ctx->m_sort_queue;
         if (!queueWalker || (newFrame->sort < queueWalker->sort)) {
+            //ALOGI("NKSG: 1 should not enter.\n");
             newFrame->nextframe = queueWalker;
             ctx->m_sort_queue = newFrame;
         } else {
@@ -463,6 +474,7 @@ void VTDecoderCallback(void *decompressionOutputRefCon,
             while (!frameInserted) {
                 nextFrame = queueWalker->nextframe;
                 if (!nextFrame || (newFrame->sort < nextFrame->sort)) {
+                    //ALOGI("NKSG: 2 nextFrame: %s.\n", nextFrame != NULL ? "not-null" : "null");
                     newFrame->nextframe = nextFrame;
                     queueWalker->nextframe = newFrame;
                     frameInserted = true;
@@ -482,7 +494,7 @@ void VTDecoderCallback(void *decompressionOutputRefCon,
             }
             goto successed;
         }
-        //ALOGI("depth %d  %d\n", ctx->m_queue_depth, ctx->m_max_ref_frames);
+        //ALOGI("NKSG: depth %d  %d\n", ctx->m_queue_depth, ctx->fmt_desc.max_ref_frames);
         if ((ctx->m_queue_depth > ctx->fmt_desc.max_ref_frames)) {
             QueuePicture(ctx);
         }
@@ -541,14 +553,16 @@ VTDecompressionSessionRef vtbsession_create(VideoToolBoxContext* context)
                                                                  0,
                                                                  &kCFTypeDictionaryKeyCallBacks,
                                                                  &kCFTypeDictionaryValueCallBacks);
+    //CFDictionarySetSInt32(destinationPixelBufferAttributes,
+    //                      kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
+    //CFDictionarySetSInt32(destinationPixelBufferAttributes,
+    //                      kCVPixelBufferWidthKey, width);
+    //CFDictionarySetSInt32(destinationPixelBufferAttributes,
+    //                      kCVPixelBufferHeightKey, height);
+    //CFDictionarySetBoolean(destinationPixelBufferAttributes,
+    //                      kCVPixelBufferOpenGLESCompatibilityKey, YES);
     CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferPixelFormatTypeKey, kCVPixelFormatType_420YpCbCr8BiPlanarVideoRange);
-    CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferWidthKey, width);
-    CFDictionarySetSInt32(destinationPixelBufferAttributes,
-                          kCVPixelBufferHeightKey, height);
-    CFDictionarySetBoolean(destinationPixelBufferAttributes,
-                          kCVPixelBufferOpenGLESCompatibilityKey, YES);
+                          kCVPixelBufferPoolMinimumBufferCountKey, 5);
     outputCallback.decompressionOutputCallback = VTDecoderCallback;
     outputCallback.decompressionOutputRefCon = context  ;
     status = VTDecompressionSessionCreate(
@@ -1117,6 +1131,11 @@ fail:
     vtbformat_destroy(fmt_desc);
     return -1;
 }
+
+int vtbformat_init_wrapper(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar) {
+    return vtbformat_init(fmt_desc, codecpar);
+}
+
 
 VideoToolBoxContext* videotoolbox_create(FFPlayer* ffp, AVCodecContext* avctx)
 {

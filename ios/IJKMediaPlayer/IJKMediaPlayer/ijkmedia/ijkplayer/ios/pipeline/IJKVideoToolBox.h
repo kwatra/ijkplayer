@@ -36,7 +36,16 @@
 #define MAX_PKT_QUEUE_DEEP   350
 #define VTB_MAX_DECODING_SAMPLES 3
 
+typedef struct VTBFormatDesc {
+    CMFormatDescriptionRef      fmt_desc;
+    int32_t                     max_ref_frames;
+    bool                        convert_bytestream;
+    bool                        convert_3byteTo4byteNALSize;
+} VTBFormatDesc;
+
 typedef struct VideoToolBoxContext VideoToolBoxContext;
+int vtbformat_init_wrapper(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar);
+CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size);
 
 VideoToolBoxContext* videotoolbox_create(FFPlayer* ffp, AVCodecContext* ic);
 
