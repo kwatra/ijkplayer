@@ -275,8 +275,44 @@ static CMSampleBufferRef CreateSampleBufferFrom(CMFormatDescriptionRef fmt_desc,
     }
 }
 
-CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size) {
-    return CreateSampleBufferFrom(fmt_desc, demux_buff, demux_size);
+CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size, CMSampleTimingInfo *sample_timing_info) {
+    OSStatus status;
+    CMBlockBufferRef newBBufOut = NULL;
+    CMSampleBufferRef sBufOut = NULL;
+    
+    status = CMBlockBufferCreateWithMemoryBlock(
+                                                NULL,
+                                                demux_buff,
+                                                demux_size,
+                                                kCFAllocatorNull,
+                                                NULL,
+                                                0,
+                                                demux_size,
+                                                FALSE,
+                                                &newBBufOut);
+    
+    if (!status) {
+        status = CMSampleBufferCreate(
+                                      NULL,
+                                      newBBufOut,
+                                      TRUE,
+                                      0,
+                                      0,
+                                      fmt_desc,
+                                      1,
+                                      1,
+                                      sample_timing_info,
+                                      0,
+                                      NULL,
+                                      &sBufOut);
+    }
+    
+    CFRelease(newBBufOut);
+    if (status == 0) {
+        return sBufOut;
+    } else {
+        return NULL;
+    }
 }
 
 

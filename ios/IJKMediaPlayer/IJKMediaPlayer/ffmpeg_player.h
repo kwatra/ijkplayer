@@ -18,7 +18,7 @@ struct FFVideoState;
 @property (nonatomic) struct FFVideoState *videoState;
 
 - (instancetype)initWithFilePath:(NSString *)filePath;
-- (CMSampleBufferRef) readNextSampleBuffer;
+- (CMSampleBufferRef)readNextSampleBuffer;
 
 @end
 

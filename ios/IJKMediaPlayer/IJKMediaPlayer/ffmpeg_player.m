@@ -126,7 +126,16 @@ static void stream_close(FFVideoState *is) {
     av_free(is);
 }
 
+static bool g_av_init = false;
+
 static FFVideoState *stream_open(const char *filename) {
+    if (!g_av_init) {
+        av_log_set_flags(AV_LOG_SKIP_REPEATED);
+        av_register_all();
+        avformat_network_init();
+        av_log_set_level(AV_LOG_DEBUG);
+        g_av_init = true;
+    }
     FFVideoState *is;
 
     is = av_mallocz(sizeof(FFVideoState));
@@ -145,7 +154,6 @@ static FFVideoState *stream_open(const char *filename) {
 }
 
 static int init_stream(FFVideoState *is) {
-//static int read_thread(void *arg)
     AVFormatContext *ic = NULL;
     int err;
 
@@ -159,6 +167,7 @@ static int init_stream(FFVideoState *is) {
     ic->interrupt_callback.opaque = is;
     
     err = avformat_open_input(&ic, is->filename, NULL, NULL);
+    av_dump_format(ic, 0, is->filename, 0);
     if (err < 0) {
         av_log(NULL, AV_LOG_ERROR, "Could not open file: %s.\n", is->filename);
         avformat_close_input(&ic);
@@ -268,14 +277,18 @@ static int vtbformat_init_my(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpa
 ((const uint8_t*)(x))[2])
 
 
-static CMSampleBufferRef create_sample_buffer(VTBFormatDesc* fmt_desc, const AVPacket *avpkt) {
+static CMSampleBufferRef create_sample_buffer(VTBFormatDesc *fmt_desc, AVRational *time_base, const AVPacket *avpkt) {
     CMSampleBufferRef sample_buff   = NULL;
     AVIOContext *pb                 = NULL;
     int demux_size                  = 0;
     uint8_t *demux_buff             = NULL;
     uint8_t *pData                  = avpkt->data;
     int iSize                       = avpkt->size;
-
+    CMSampleTimingInfo timing_info;
+    timing_info.decodeTimeStamp = CMTimeMake(avpkt->dts, av_q2d(av_inv_q(*time_base)));
+    timing_info.duration = CMTimeMake(avpkt->duration, av_q2d(av_inv_q(*time_base)));
+    timing_info.presentationTimeStamp = CMTimeMake(avpkt->pts, av_q2d(av_inv_q(*time_base)));
+    
     if (fmt_desc->convert_bytestream) {
         // ALOGI("the buffer should m_convert_byte\n");
         if(avio_open_dyn_buf(&pb) < 0) {
@@ -287,7 +300,7 @@ static CMSampleBufferRef create_sample_buffer(VTBFormatDesc* fmt_desc, const AVP
         if (demux_size == 0) {
             goto failed;
         }
-        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, demux_buff, demux_size);
+        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, demux_buff, demux_size, &timing_info);
     } else if (fmt_desc->convert_3byteTo4byteNALSize) {
         // ALOGI("3byteto4byte\n");
         if (avio_open_dyn_buf(&pb) < 0) {
@@ -305,9 +318,9 @@ static CMSampleBufferRef create_sample_buffer(VTBFormatDesc* fmt_desc, const AVP
             nal_start += nal_size;
         }
         demux_size = avio_close_dyn_buf(pb, &demux_buff);
-        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, demux_buff, demux_size);
+        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, demux_buff, demux_size, &timing_info);
     } else {
-        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, pData, iSize);
+        sample_buff = CreateSampleBufferFrom_wrapper(fmt_desc->fmt_desc, pData, iSize, &timing_info);
     }
     if (!sample_buff) {
         if (demux_size) {
@@ -354,8 +367,12 @@ failed:
 
 - (CMSampleBufferRef)readNextSampleBuffer {
     AVPacket pkt;
-    av_read_frame(_videoState->ic, &pkt);
-    return create_sample_buffer(&(_videoState->video_fmt_desc), &pkt);
+    pkt.stream_index = -1;
+    int ret = 0;
+    while (ret >= 0 && pkt.stream_index != self.videoState->video_stream) {
+        ret = av_read_frame(self.videoState->ic, &pkt);
+    }
+    return create_sample_buffer(&(self.videoState->video_fmt_desc), &(self.videoState->video_st->time_base), &pkt);
 }
 
 @end

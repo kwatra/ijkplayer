@@ -45,7 +45,7 @@ typedef struct VTBFormatDesc {
 
 typedef struct VideoToolBoxContext VideoToolBoxContext;
 int vtbformat_init_wrapper(VTBFormatDesc *fmt_desc, AVCodecParameters *codecpar);
-CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size);
+CMSampleBufferRef CreateSampleBufferFrom_wrapper(CMFormatDescriptionRef fmt_desc, void *demux_buff, size_t demux_size, CMSampleTimingInfo *sample_timing_info);
 
 VideoToolBoxContext* videotoolbox_create(FFPlayer* ffp, AVCodecContext* ic);
 
