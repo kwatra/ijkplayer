@@ -285,8 +285,8 @@ static CMSampleBufferRef create_sample_buffer(VTBFormatDesc *fmt_desc, AVRationa
     uint8_t *pData                  = avpkt->data;
     int iSize                       = avpkt->size;
     CMSampleTimingInfo timing_info;
-    timing_info.decodeTimeStamp = CMTimeMake(avpkt->dts, av_q2d(av_inv_q(*time_base)));
     timing_info.duration = CMTimeMake(avpkt->duration, av_q2d(av_inv_q(*time_base)));
+    timing_info.decodeTimeStamp = CMTimeMake(avpkt->dts, av_q2d(av_inv_q(*time_base)));
     timing_info.presentationTimeStamp = CMTimeMake(avpkt->pts, av_q2d(av_inv_q(*time_base)));
     
     if (fmt_desc->convert_bytestream) {
@@ -373,6 +373,10 @@ failed:
         ret = av_read_frame(self.videoState->ic, &pkt);
     }
     return create_sample_buffer(&(self.videoState->video_fmt_desc), &(self.videoState->video_st->time_base), &pkt);
+}
+
+- (CMFormatDescriptionRef)getVideoFormatDescription {
+    return self.videoState->video_fmt_desc.fmt_desc;
 }
 
 @end

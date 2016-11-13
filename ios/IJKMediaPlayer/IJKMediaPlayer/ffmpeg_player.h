@@ -19,6 +19,7 @@ struct FFVideoState;
 
 - (instancetype)initWithFilePath:(NSString *)filePath;
 - (CMSampleBufferRef)readNextSampleBuffer;
+- (CMFormatDescriptionRef)getVideoFormatDescription;
 
 @end
 
