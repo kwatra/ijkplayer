@@ -607,6 +607,10 @@ static int decode_video_internal(VideoToolBoxContext* context, AVCodecContext *a
         }
 
         sample_info_flush(context, 1000);
+        // NOTE(vingo): Refresh request is called on flushing the stream (like in seek) and
+        // destroying and recreating a vtbsession causes noticeable latency.
+        // It is also called on resolution changes, but for now we'll skip handling these. 
+        /*
         vtbsession_destroy(context);
         memset(context->sample_info_array, 0, sizeof(context->sample_info_array));
         context->sample_infos_in_decoding = 0;
@@ -614,6 +618,7 @@ static int decode_video_internal(VideoToolBoxContext* context, AVCodecContext *a
         context->vt_session = vtbsession_create(context);
         if (!context->vt_session)
             goto failed;
+         */
         context->refresh_request = false;
     }
 

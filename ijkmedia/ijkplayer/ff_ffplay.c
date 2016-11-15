@@ -905,6 +905,11 @@ static void stream_toggle_pause_l(FFPlayer *ffp, int pause_on)
     set_clock(&is->extclk, get_clock(&is->extclk), is->extclk.serial);
     is->paused = is->audclk.paused = is->vidclk.paused = is->extclk.paused = pause_on;
 
+    // vingo: toggle pause is called temporarily to allow stepping to the next frame, even
+    // if the user has not requested a toggle pause.
+    // Resuming and then pausing the audio while stepping is an unnecessary overhead,
+    // noticeable during a seek.
+    // TODO: Disable this while stepping.
     SDL_AoutPauseAudio(ffp->aout, pause_on);
 }
 
