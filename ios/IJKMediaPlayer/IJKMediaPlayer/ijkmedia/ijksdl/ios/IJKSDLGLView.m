@@ -77,8 +77,8 @@
         _didSetupGL = NO;
         [self setupGLOnce];
 
-        _hudViewController = [[IJKSDLHudViewController alloc] init];
-        [self addSubview:_hudViewController.tableView];
+        //_hudViewController = [[IJKSDLHudViewController alloc] init];
+        //[self addSubview:_hudViewController.tableView];
     }
 
     return self;
@@ -258,7 +258,7 @@
     newFrame.size.height  = selfFrame.size.height * 8 / 8;
     newFrame.origin.y    += selfFrame.size.height * 0 / 8;
 
-    _hudViewController.tableView.frame = newFrame;
+    //_hudViewController.tableView.frame = newFrame;
     [self invalidateRenderBuffer];
 }
 
