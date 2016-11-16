@@ -80,6 +80,7 @@ typedef enum IJKLogLevel {
 - (void)play;
 - (void)pause;
 - (void)stop;
+- (void)updateMute:(BOOL)mute_on;
 - (BOOL)isPlaying;
 
 - (void)setPauseInBackground:(BOOL)pause;

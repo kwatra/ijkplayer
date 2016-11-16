@@ -568,6 +568,28 @@ int ijkmp_seek_to(IjkMediaPlayer *mp, long msec)
     return retval;
 }
 
+static int ijkmp_update_mute_l(IjkMediaPlayer *mp, bool mute_on)
+{
+    assert(mp);
+    
+    ffp_remove_msg(mp->ffplayer, FFP_REQ_MUTE);
+    ffp_remove_msg(mp->ffplayer, FFP_REQ_UNMUTE);
+    ffp_notify_msg1(mp->ffplayer, mute_on ? FFP_REQ_MUTE: FFP_REQ_UNMUTE);
+    
+    return 0;
+}
+
+int ijkmp_update_mute(IjkMediaPlayer *mp, bool mute_on)
+{
+    assert(mp);
+    MPTRACE("ijkmp_update_mute(%d)\n", mute_on);
+    pthread_mutex_lock(&mp->mutex);
+    int retval = ijkmp_update_mute_l(mp, mute_on);
+    pthread_mutex_unlock(&mp->mutex);
+    MPTRACE("ijkmp_update_mute(%d)=%d\n", mute_on, retval);
+    return retval;
+}
+
 int ijkmp_get_state(IjkMediaPlayer *mp)
 {
     return mp->mp_state;
@@ -751,6 +773,21 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
             }
             pthread_mutex_unlock(&mp->mutex);
             break;
+                
+        case FFP_REQ_MUTE:
+            MPTRACE("ijkmp_get_msg: FFP_REQ_MUTE\n");
+            pthread_mutex_lock(&mp->mutex);
+            ffp_update_mute_l(mp->ffplayer, true);
+            pthread_mutex_unlock(&mp->mutex);
+            break;
+                
+        case FFP_REQ_UNMUTE:
+            MPTRACE("ijkmp_get_msg: FFP_REQ_UNMUTE\n");
+            pthread_mutex_lock(&mp->mutex);
+            ffp_update_mute_l(mp->ffplayer, false);
+            pthread_mutex_unlock(&mp->mutex);
+            break;
+                
         }
 
         if (continue_wait_next_msg)

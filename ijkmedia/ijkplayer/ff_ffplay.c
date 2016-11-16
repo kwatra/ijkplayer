@@ -4141,3 +4141,14 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
 
     return ffp->meta;
 }
+
+int ffp_update_mute_l(FFPlayer *ffp, bool mute_on)
+{
+    assert(ffp);
+    VideoState *is = ffp->is;
+    if (!is)
+        return EIJK_NULL_IS_PTR;
+
+    is->muted = mute_on;
+    return 0;
+}

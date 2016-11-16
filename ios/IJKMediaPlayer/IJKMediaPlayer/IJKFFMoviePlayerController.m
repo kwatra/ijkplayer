@@ -315,6 +315,14 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     ijkmp_stop(_mediaPlayer);
 }
 
+- (void)updateMute:(BOOL)mute_on
+{
+    if (!_mediaPlayer)
+        return;
+    
+    ijkmp_update_mute(_mediaPlayer, mute_on);
+}
+
 - (BOOL)isPlaying
 {
     if (!_mediaPlayer)
