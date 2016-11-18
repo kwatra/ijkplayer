@@ -1041,7 +1041,7 @@ retry:
             lastvp = frame_queue_peek_last(&is->pictq);
             vp = frame_queue_peek(&is->pictq);
 
-            if (vp->serial != is->videoq.serial) {
+            if (vp->serial != is->videoq.serial && frame_queue_nb_remaining(&is->pictq) > 1) {
                 frame_queue_next(&is->pictq);
                 goto retry;
             }

@@ -483,7 +483,7 @@ void VTDecoderCallback(void *decompressionOutputRefCon,
             goto successed;
         }
         //ALOGI("depth %d  %d\n", ctx->m_queue_depth, ctx->m_max_ref_frames);
-        if ((ctx->m_queue_depth > ctx->fmt_desc.max_ref_frames)) {
+        if ((ctx->m_queue_depth > ctx->fmt_desc.max_ref_frames) || is->step) {
             QueuePicture(ctx);
         }
     successed:
