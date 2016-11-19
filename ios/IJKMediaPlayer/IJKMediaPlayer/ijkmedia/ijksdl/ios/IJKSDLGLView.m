@@ -57,6 +57,7 @@
     NSMutableArray *_registeredNotifications;
 
     IJKSDLHudViewController *_hudViewController;
+    GLfloat         _preferredRotation;
 }
 
 + (Class) layerClass
@@ -74,6 +75,7 @@
         _registeredNotifications = [[NSMutableArray alloc] init];
         [self registerApplicationObservers];
 
+        _preferredRotation = 0.0;
         _didSetupGL = NO;
         [self setupGLOnce];
 
@@ -82,6 +84,10 @@
     }
 
     return self;
+}
+
+- (void)setPreferredRotation:(GLfloat)preferredRotation {
+    _preferredRotation = preferredRotation;
 }
 
 - (void)willMoveToWindow:(UIWindow *)newWindow
@@ -289,12 +295,13 @@
         return _renderer != nil;
 
     if (!IJK_GLES2_Renderer_isValid(_renderer) ||
-        !IJK_GLES2_Renderer_isFormat(_renderer, overlay->format)) {
+        !IJK_GLES2_Renderer_isFormat(_renderer, overlay->format) ||
+        !IJK_GLES2_Renderer_isRotation(_renderer, _preferredRotation)) {
 
         IJK_GLES2_Renderer_reset(_renderer);
         IJK_GLES2_Renderer_freeP(&_renderer);
 
-        _renderer = IJK_GLES2_Renderer_create(overlay);
+        _renderer = IJK_GLES2_Renderer_create(overlay, _preferredRotation);
         if (!IJK_GLES2_Renderer_isValid(_renderer))
             return NO;
 

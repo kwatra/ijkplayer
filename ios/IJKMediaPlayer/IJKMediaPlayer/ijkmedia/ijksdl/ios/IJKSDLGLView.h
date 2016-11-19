@@ -29,6 +29,7 @@
 @interface IJKSDLGLView : UIView
 
 - (id) initWithFrame:(CGRect)frame;
+- (void)setPreferredRotation:(GLfloat)preferredRotation;
 - (void) display: (SDL_VoutOverlay *) overlay;
 
 - (UIImage*) snapshot;

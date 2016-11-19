@@ -256,6 +256,10 @@ void IJKFFIOStatCompleteRegister(void (*cb)(const char *url,
     return _shouldAutoplay;
 }
 
+- (void)setPreferredRotation:(CGFloat)preferredRotation {
+    [_glView setPreferredRotation:preferredRotation];
+}
+
 - (void)prepareToPlay
 {
     if (!_mediaPlayer)

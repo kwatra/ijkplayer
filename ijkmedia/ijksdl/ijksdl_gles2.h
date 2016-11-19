@@ -56,7 +56,7 @@ GLuint IJK_GLES2_loadShader(GLenum shader_type, const char *shader_source);
 #define IJK_GLES2_MAX_PLANE 3
 typedef struct IJK_GLES2_Renderer IJK_GLES2_Renderer;
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay);
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay, GLfloat preffered_rotation);
 void      IJK_GLES2_Renderer_reset(IJK_GLES2_Renderer *renderer);
 void      IJK_GLES2_Renderer_free(IJK_GLES2_Renderer *renderer);
 void      IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer);
@@ -64,6 +64,7 @@ void      IJK_GLES2_Renderer_freeP(IJK_GLES2_Renderer **renderer);
 GLboolean IJK_GLES2_Renderer_setupGLES();
 GLboolean IJK_GLES2_Renderer_isValid(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format);
+GLboolean IJK_GLES2_Renderer_isRotation(IJK_GLES2_Renderer *renderer, GLfloat rotation);
 GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer);
 GLboolean IJK_GLES2_Renderer_renderOverlay(IJK_GLES2_Renderer *renderer, SDL_VoutOverlay *overlay);
 

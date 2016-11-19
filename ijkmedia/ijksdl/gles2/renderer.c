@@ -151,7 +151,7 @@ fail:
 }
 
 
-IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
+IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay, GLfloat preferred_rotation)
 {
     if (!overlay)
         return NULL;
@@ -179,6 +179,7 @@ IJK_GLES2_Renderer *IJK_GLES2_Renderer_create(SDL_VoutOverlay *overlay)
     }
 
     renderer->format = overlay->format;
+    renderer->preferred_rotation = preferred_rotation;
     return renderer;
 }
 
@@ -193,6 +194,14 @@ GLboolean IJK_GLES2_Renderer_isFormat(IJK_GLES2_Renderer *renderer, int format)
         return GL_FALSE;
 
     return renderer->format == format ? GL_TRUE : GL_FALSE;
+}
+
+GLboolean IJK_GLES2_Renderer_isRotation(IJK_GLES2_Renderer *renderer, GLfloat rotation)
+{
+    if (!IJK_GLES2_Renderer_isValid(renderer))
+        return GL_FALSE;
+    
+    return renderer->preferred_rotation == rotation ? GL_TRUE : GL_FALSE;
 }
 
 /*
@@ -253,8 +262,13 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         width = width * renderer->frame_sar_num / renderer->frame_sar_den;
     }
 
-    const float dW  = (float)renderer->layer_width	/ width;
-    const float dH  = (float)renderer->layer_height / height;
+    float lw = (float)renderer->layer_width;
+    float lh = (float)renderer->layer_height;
+    if (abs(sinf(renderer->preferred_rotation)) > 0.5) {
+        float temp = lw; lw = lh; lh = temp;
+    }
+    const float dW  = lw / width;
+    const float dH  = lh / height;
     float dd        = 1.0f;
     float nW        = 1.0f;
     float nH        = 1.0f;
@@ -264,8 +278,8 @@ static void IJK_GLES2_Renderer_Vertices_apply(IJK_GLES2_Renderer *renderer)
         case IJK_GLES2_GRAVITY_RESIZE_ASPECT:       dd = FFMIN(dW, dH); break;
     }
 
-    nW = (width  * dd / (float)renderer->layer_width);
-    nH = (height * dd / (float)renderer->layer_height);
+    nW = (width  * dd / lw);
+    nH = (height * dd / lh);
 
     renderer->vertices[0] = - nW;
     renderer->vertices[1] = - nH;
@@ -337,6 +351,32 @@ static void IJK_GLES2_Renderer_TexCoords_reloadVertex(IJK_GLES2_Renderer *render
     glEnableVertexAttribArray(renderer->av2_texcoord);                                              IJK_GLES2_checkError_TRACE("glEnableVertexAttribArray(av2_texcoord)");
 }
 
+static int m_index(int row, int column) {
+    // Matrix is column major
+    return column * 4 + row;
+}
+
+static void matrix_multiply(const IJK_GLES_Matrix *m1,
+                            const IJK_GLES_Matrix *m2,
+                            IJK_GLES_Matrix *ret) {
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            ret->m[m_index(i,j)] = 0;
+            for (int k = 0; k < 4; ++k) {
+                ret->m[m_index(i,j)] += m1->m[m_index(i, k)] * m2->m[m_index(k, j)];
+            }
+        }
+    }
+}
+
+static void matrix_print(const IJK_GLES_Matrix *m) {
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            printf("%d, %f ", m_index(i,j), m->m[m_index(i, j)]);
+        }
+        printf("\n");
+    }
+}
 /*
  * Per-Renderer routine
  */
@@ -349,8 +389,21 @@ GLboolean IJK_GLES2_Renderer_use(IJK_GLES2_Renderer *renderer)
     if (!renderer->func_use(renderer))
         return GL_FALSE;
 
+    IJK_GLES_Matrix projectionMatrix;
+    IJK_GLES2_loadOrtho(&projectionMatrix, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    
+    GLfloat rot = renderer->preferred_rotation;
+    // colum major
+    GLfloat rotationMatrix[16] = {
+        cosf(rot),  sinf(rot),  0,  0,
+        -sinf(rot), cosf(rot),  0,  0,
+        0,          0,          1,  0,
+        0,          0,          0,  1};
+    IJK_GLES_Matrix modelViewMatrix;
+    memcpy(modelViewMatrix.m, rotationMatrix, sizeof(rotationMatrix));
     IJK_GLES_Matrix modelViewProj;
-    IJK_GLES2_loadOrtho(&modelViewProj, -1.0f, 1.0f, -1.0f, 1.0f, -1.0f, 1.0f);
+    matrix_multiply(&projectionMatrix, &modelViewMatrix, &modelViewProj);
+    
     glUniformMatrix4fv(renderer->um4_mvp, 1, GL_FALSE, modelViewProj.m);                    IJK_GLES2_checkError_TRACE("glUniformMatrix4fv(um4_mvp)");
 
     IJK_GLES2_Renderer_TexCoords_reset(renderer);
