@@ -1,1 +1,1 @@
-module-lite.sh
+module-vingo.sh
