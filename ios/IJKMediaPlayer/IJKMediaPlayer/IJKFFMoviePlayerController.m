@@ -32,6 +32,10 @@
 
 #include "string.h"
 
+#ifndef DEBUG
+#   define NSLog(...)
+#endif
+
 static const char *kIJKFFRequiredFFmpegVersion = "ff3.1--ijk0.6.2--20160926--001";
 
 @interface IJKFFMoviePlayerController()

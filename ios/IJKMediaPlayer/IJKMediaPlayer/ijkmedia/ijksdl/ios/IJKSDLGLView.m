@@ -28,6 +28,10 @@
 #include "ijksdl/ijksdl_gles2.h"
 #import "IJKSDLHudViewController.h"
 
+#ifndef DEBUG
+#   define NSLog(...)
+#endif
+
 @interface IJKSDLGLView()
 @property(atomic,strong) NSRecursiveLock *glActiveLock;
 @property(atomic) BOOL glActivePaused;
