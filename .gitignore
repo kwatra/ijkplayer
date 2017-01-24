@@ -10,6 +10,9 @@ extra
 ijkmedia/ijkyuv/
 ijkprof/android-ndk-profiler/
 
+# vim swp files
+.*.sw*
+
 # built application files
 *.apk
 *.ap_

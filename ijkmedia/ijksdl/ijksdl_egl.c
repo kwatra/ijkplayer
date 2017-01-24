@@ -277,7 +277,7 @@ static EGLBoolean IJK_EGL_prepareRenderer(IJK_EGL* egl, SDL_VoutOverlay *overlay
         IJK_GLES2_Renderer_reset(opaque->renderer);
         IJK_GLES2_Renderer_freeP(&opaque->renderer);
 
-        opaque->renderer = IJK_GLES2_Renderer_create(overlay);
+        opaque->renderer = IJK_GLES2_Renderer_create(overlay, 0);
         if (!opaque->renderer) {
             ALOGE("[EGL] Could not create render.");
             return EGL_FALSE;

@@ -1,1 +1,1 @@
-module-vingo.sh
+module-default.sh
