@@ -192,6 +192,8 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
         ijkmeta_set_int64_l(meta, IJKM_KEY_BITRATE, ic->bit_rate);
 
     IjkMediaMeta *stream_meta = NULL;
+    int video_stream_index = -1;
+    int audio_stream_index = -1;
     for (int i = 0; i < ic->nb_streams; i++) {
         if (!stream_meta)
             ijkmeta_destroy_p(&stream_meta);
@@ -254,6 +256,8 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                 if (rotate != 0) {
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_ROTATE, rotate);
                 }
+
+                video_stream_index = i;
                 break;
             }
             case AVMEDIA_TYPE_AUDIO: {
@@ -263,6 +267,8 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_SAMPLE_RATE, codecpar->sample_rate);
                 if (codecpar->channel_layout)
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_CHANNEL_LAYOUT, codecpar->channel_layout);
+
+                audio_stream_index = i;
                 break;
             }
             default: {
@@ -277,6 +283,14 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
 
         ijkmeta_append_child_l(meta, stream_meta);
         stream_meta = NULL;
+    }
+
+    ALOGD("stream indices: video: %d, audio: %d", video_stream_index, audio_stream_index);
+    if (video_stream_index != -1) {
+      ijkmeta_set_int64_l(meta, IJKM_KEY_VIDEO_STREAM, video_stream_index);
+    }
+    if (audio_stream_index != -1) {
+      ijkmeta_set_int64_l(meta, IJKM_KEY_AUDIO_STREAM, audio_stream_index);
     }
 
     if (!stream_meta)

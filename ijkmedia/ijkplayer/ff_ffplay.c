@@ -4156,16 +4156,38 @@ IjkMediaMeta *ffp_read_meta(const char* filename) {
         return NULL;
     }
 
-    // (Un)comment if need/don't need stream level information.
+    bool found_size = false;
+    for (int i = 0; i < ic->nb_streams; i++) {
+        AVStream *st = ic->streams[i];
+        if (!st || !st->codecpar)
+            continue;
+
+        AVCodecParameters *codecpar = st->codecpar;
+        switch (codecpar->codec_type) {
+            case AVMEDIA_TYPE_VIDEO: {
+                if (codecpar->width > 0 && codecpar->height > 0) {
+                    found_size = true;
+                }
+                break;
+            }
+            default:
+                break;
+        }
+    }
+
     // Takes around 50ms extra compared to baseline of 10ms.
-    //err = avformat_find_stream_info(ic, NULL);
-    //if (err < 0) {
-    //    print_error(filename, err);
-    //}
+    if (!found_size) {
+      ALOGD("Could not find size by default for file: %s. Finding stream info.", filename);
+      err = avformat_find_stream_info(ic, NULL);
+      if (err < 0) {
+          print_error(filename, err);
+      }
+    }
 
     // Copy metadata from ic to IjkMediaMeta.
     IjkMediaMeta* meta = ijkmeta_create();
     ijkmeta_set_avformat_context_l(meta, ic);
+
 
     avformat_close_input(&ic);
     return meta;

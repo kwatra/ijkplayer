@@ -865,6 +865,7 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     private native Bundle _getMediaMeta();
 
     public static Bundle readMediaMeta(String filename) {
+        loadLibrariesOnce(sLocalLibLoader);
         return _readMediaMeta(filename);
     }
     private static native Bundle _readMediaMeta(String filename);
