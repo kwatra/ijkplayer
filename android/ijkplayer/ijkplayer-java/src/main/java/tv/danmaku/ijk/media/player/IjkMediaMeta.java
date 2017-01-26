@@ -33,6 +33,7 @@ public class IjkMediaMeta {
     // stream: video
     public static final String IJKM_KEY_WIDTH = "width";
     public static final String IJKM_KEY_HEIGHT = "height";
+    public static final String IJKM_KEY_ROTATE = "rotate";
     public static final String IJKM_KEY_FPS_NUM = "fps_num";
     public static final String IJKM_KEY_FPS_DEN = "fps_den";
     public static final String IJKM_KEY_TBR_NUM = "tbr_num";
@@ -233,6 +234,7 @@ public class IjkMediaMeta {
             if (streamMeta.mType.equalsIgnoreCase(IJKM_VAL_TYPE__VIDEO)) {
                 streamMeta.mWidth = streamMeta.getInt(IJKM_KEY_WIDTH);
                 streamMeta.mHeight = streamMeta.getInt(IJKM_KEY_HEIGHT);
+                streamMeta.mRotate = streamMeta.getInt(IJKM_KEY_ROTATE);
                 streamMeta.mFpsNum = streamMeta.getInt(IJKM_KEY_FPS_NUM);
                 streamMeta.mFpsDen = streamMeta.getInt(IJKM_KEY_FPS_DEN);
                 streamMeta.mTbrNum = streamMeta.getInt(IJKM_KEY_TBR_NUM);
@@ -275,6 +277,7 @@ public class IjkMediaMeta {
         // video
         public int mWidth;
         public int mHeight;
+        public int mRotate;
         public int mFpsNum;
         public int mFpsDen;
         public int mTbrNum;
