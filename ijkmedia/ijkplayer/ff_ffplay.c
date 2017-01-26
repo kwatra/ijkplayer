@@ -4142,6 +4142,34 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
     return ffp->meta;
 }
 
+IjkMediaMeta *ffp_read_meta(const char* filename) {
+    AVFormatContext *ic = avformat_alloc_context();
+    if (!ic) {
+        av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
+        return NULL;
+    }
+
+    int err = avformat_open_input(&ic, filename, NULL  /*format*/, NULL  /*format_opts*/);
+    if (err < 0) {
+        print_error(filename, err);
+        avformat_close_input(&ic);
+        return NULL;
+    }
+
+    // Comment if don't need stream level information.
+    err = avformat_find_stream_info(ic, NULL);
+    if (err < 0) {
+        print_error(filename, err);
+    }
+
+    // Copy metadata from ic to IjkMediaMeta.
+    IjkMediaMeta* meta = ijkmeta_create();
+    ijkmeta_set_avformat_context_l(meta, ic);
+
+    avformat_close_input(&ic);
+    return meta;
+}
+
 int ffp_update_mute_l(FFPlayer *ffp, bool mute_on)
 {
     assert(ffp);

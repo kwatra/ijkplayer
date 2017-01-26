@@ -23,6 +23,7 @@
 #include "ijkmeta.h"
 #include "ff_ffinc.h"
 #include "ijksdl/ijksdl_misc.h"
+#include "ff_cmdutils.h"
 
 #define IJK_META_INIT_CAPACITY 13
 
@@ -247,6 +248,11 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
                 if (st->r_frame_rate.num > 0 && st->r_frame_rate.den > 0) {
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_TBR_NUM, st->avg_frame_rate.num);
                     ijkmeta_set_int64_l(stream_meta, IJKM_KEY_TBR_DEN, st->avg_frame_rate.den);
+                }
+
+                int64_t rotate = (int64_t) get_rotation(st);
+                if (rotate != 0) {
+                    ijkmeta_set_int64_l(stream_meta, IJKM_KEY_ROTATE, rotate);
                 }
                 break;
             }

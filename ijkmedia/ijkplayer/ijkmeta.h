@@ -51,6 +51,7 @@
 // stream: video
 #define IJKM_KEY_WIDTH          "width"
 #define IJKM_KEY_HEIGHT         "height"
+#define IJKM_KEY_ROTATE         "rotate"
 #define IJKM_KEY_FPS_NUM        "fps_num"
 #define IJKM_KEY_FPS_DEN        "fps_den"
 #define IJKM_KEY_TBR_NUM        "tbr_num"

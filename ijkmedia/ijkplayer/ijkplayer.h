@@ -180,6 +180,7 @@ void            ijkmp_set_property_int64(IjkMediaPlayer *mp, int id, int64_t val
 
 // must be freed with free();
 IjkMediaMeta   *ijkmp_get_meta_l(IjkMediaPlayer *mp);
+IjkMediaMeta   *ijkmp_read_meta(const char* filename);
 
 // preferred to be called explicity, can be called multiple times
 // NOTE: ijkmp_shutdown may block thread

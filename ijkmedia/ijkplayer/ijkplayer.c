@@ -261,6 +261,14 @@ IjkMediaMeta *ijkmp_get_meta_l(IjkMediaPlayer *mp)
     return ret;
 }
 
+IjkMediaMeta *ijkmp_read_meta(const char* filename)
+{
+    MPTRACE("%s\n", __func__);
+    IjkMediaMeta *ret = ffp_read_meta(filename);
+    MPTRACE("%s()=void\n", __func__);
+    return ret;
+}
+
 void ijkmp_shutdown_l(IjkMediaPlayer *mp)
 {
     assert(mp);

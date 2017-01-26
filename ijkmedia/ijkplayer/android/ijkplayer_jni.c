@@ -591,19 +591,14 @@ inline static void fillMetaInternal(JNIEnv *env, jobject jbundle, IjkMediaMeta *
 }
 
 static jobject
-IjkMediaPlayer_getMediaMeta(JNIEnv *env, jobject thiz)
+fillMediaMeta(JNIEnv *env, IjkMediaMeta *meta)
 {
-    MPTRACE("%s\n", __func__);
     bool is_locked = false;
     jobject jret_bundle = NULL;
     jobject jlocal_bundle = NULL;
     jobject jstream_bundle = NULL;
     jobject jarray_list = NULL;
-    IjkMediaMeta *meta = NULL;
-    IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
-    JNI_CHECK_GOTO(mp, env, "java/lang/IllegalStateException", "mpjni: getMediaMeta: null mp", LABEL_RETURN);
 
-    meta = ijkmp_get_meta_l(mp);
     if (!meta)
         goto LABEL_RETURN;
 
@@ -652,6 +647,7 @@ IjkMediaPlayer_getMediaMeta(JNIEnv *env, jobject thiz)
                 if (0 == strcmp(type, IJKM_VAL_TYPE__VIDEO)) {
                     fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_WIDTH, NULL );
                     fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_HEIGHT, NULL );
+                    fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_ROTATE, NULL );
                     fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_FPS_NUM, NULL );
                     fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_FPS_DEN, NULL );
                     fillMetaInternal(env, jstream_bundle, streamRawMeta, IJKM_KEY_TBR_NUM, NULL );
@@ -683,7 +679,40 @@ LABEL_RETURN:
     SDL_JNI_DeleteLocalRefP(env, &jlocal_bundle);
     SDL_JNI_DeleteLocalRefP(env, &jarray_list);
 
+    return jret_bundle;
+}
+
+static jobject
+IjkMediaPlayer_getMediaMeta(JNIEnv *env, jobject thiz)
+{
+    MPTRACE("%s\n", __func__);
+    jobject jret_bundle = NULL;
+    IjkMediaMeta *meta = NULL;
+    IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
+    JNI_CHECK_GOTO(mp, env, "java/lang/IllegalStateException", "mpjni: getMediaMeta: null mp", LABEL_RETURN);
+
+    meta = ijkmp_get_meta_l(mp);
+    jret_bundle = fillMediaMeta(env, meta);
+
+LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
+    return jret_bundle;
+}
+
+static jobject
+IjkMediaPlayer_readMediaMeta(JNIEnv *env, jobject thiz, jstring filename)
+{
+    MPTRACE("%s\n", __func__);
+
+    const char *c_filename = (*env)->GetStringUTFChars(env, filename, NULL);
+    IjkMediaMeta *meta = ijkmp_read_meta(c_filename);
+    jobject jret_bundle = fillMediaMeta(env, meta);
+
+    ijkmeta_destroy_p(&meta);
+    if (c_filename) {
+      (*env)->ReleaseStringUTFChars(env, filename, c_filename);
+    }
+
     return jret_bundle;
 }
 
@@ -1029,6 +1058,7 @@ static JNINativeMethod g_methods[] = {
     { "_getVideoCodecInfo",     "()Ljava/lang/String;",     (void *) IjkMediaPlayer_getVideoCodecInfo },
     { "_getAudioCodecInfo",     "()Ljava/lang/String;",     (void *) IjkMediaPlayer_getAudioCodecInfo },
     { "_getMediaMeta",          "()Landroid/os/Bundle;",    (void *) IjkMediaPlayer_getMediaMeta },
+    { "_readMediaMeta",         "(Ljava/lang/String;)Landroid/os/Bundle;",    (void *) IjkMediaPlayer_readMediaMeta },
     { "_setLoopCount",          "(I)V",                     (void *) IjkMediaPlayer_setLoopCount },
     { "_getLoopCount",          "()I",                      (void *) IjkMediaPlayer_getLoopCount },
     { "_getPropertyFloat",      "(IF)F",                    (void *) ijkMediaPlayer_getPropertyFloat },
