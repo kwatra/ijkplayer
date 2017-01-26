@@ -4156,11 +4156,12 @@ IjkMediaMeta *ffp_read_meta(const char* filename) {
         return NULL;
     }
 
-    // Comment if don't need stream level information.
-    err = avformat_find_stream_info(ic, NULL);
-    if (err < 0) {
-        print_error(filename, err);
-    }
+    // (Un)comment if need/don't need stream level information.
+    // Takes around 50ms extra compared to baseline of 10ms.
+    //err = avformat_find_stream_info(ic, NULL);
+    //if (err < 0) {
+    //    print_error(filename, err);
+    //}
 
     // Copy metadata from ic to IjkMediaMeta.
     IjkMediaMeta* meta = ijkmeta_create();
