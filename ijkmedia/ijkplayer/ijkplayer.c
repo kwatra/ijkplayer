@@ -261,10 +261,10 @@ IjkMediaMeta *ijkmp_get_meta_l(IjkMediaPlayer *mp)
     return ret;
 }
 
-IjkMediaMeta *ijkmp_read_meta(const char* filename)
+IjkMediaMeta *ijkmp_read_meta(const char* filename, bool dont_read_stream_info)
 {
     MPTRACE("%s\n", __func__);
-    IjkMediaMeta *ret = ffp_read_meta(filename);
+    IjkMediaMeta *ret = ffp_read_meta(filename, dont_read_stream_info);
     MPTRACE("%s()=void\n", __func__);
     return ret;
 }
@@ -525,8 +525,7 @@ int ijkmp_stop(IjkMediaPlayer *mp)
 bool ijkmp_is_playing(IjkMediaPlayer *mp)
 {
     assert(mp);
-    if (mp->mp_state == MP_STATE_PREPARED ||
-        mp->mp_state == MP_STATE_STARTED) {
+    if (mp->mp_state == MP_STATE_STARTED) {
         return true;
     }
 

@@ -112,7 +112,7 @@ void      ffp_set_property_int64(FFPlayer *ffp, int id, int64_t value);
 
 // must be freed with free();
 struct IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp);
-struct IjkMediaMeta *ffp_read_meta(const char* filename);
+struct IjkMediaMeta *ffp_read_meta(const char* filename, bool dont_read_stream_info);
 int       ffp_update_mute_l(FFPlayer *ffp, bool mute_on);
 
 #endif

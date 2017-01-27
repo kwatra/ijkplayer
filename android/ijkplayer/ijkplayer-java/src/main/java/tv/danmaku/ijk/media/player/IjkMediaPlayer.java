@@ -864,11 +864,11 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     }
     private native Bundle _getMediaMeta();
 
-    public static Bundle readMediaMeta(String filename) {
+    public static Bundle readMediaMeta(String filename, boolean dont_read_stream_info) {
         loadLibrariesOnce(sLocalLibLoader);
-        return _readMediaMeta(filename);
+        return _readMediaMeta(filename, dont_read_stream_info);
     }
-    private static native Bundle _readMediaMeta(String filename);
+    private static native Bundle _readMediaMeta(String filename, boolean dont_read_stream_info);
 
     public static String getColorFormatName(int mediaCodecColorFormat) {
         return _getColorFormatName(mediaCodecColorFormat);

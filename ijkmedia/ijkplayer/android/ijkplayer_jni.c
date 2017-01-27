@@ -700,12 +700,12 @@ LABEL_RETURN:
 }
 
 static jobject
-IjkMediaPlayer_readMediaMeta(JNIEnv *env, jobject thiz, jstring filename)
+IjkMediaPlayer_readMediaMeta(JNIEnv *env, jobject thiz, jstring filename, jboolean dont_read_stream_info)
 {
     MPTRACE("%s\n", __func__);
 
     const char *c_filename = (*env)->GetStringUTFChars(env, filename, NULL);
-    IjkMediaMeta *meta = ijkmp_read_meta(c_filename);
+    IjkMediaMeta *meta = ijkmp_read_meta(c_filename, dont_read_stream_info);
     jobject jret_bundle = fillMediaMeta(env, meta);
 
     ijkmeta_destroy_p(&meta);
@@ -1058,7 +1058,7 @@ static JNINativeMethod g_methods[] = {
     { "_getVideoCodecInfo",     "()Ljava/lang/String;",     (void *) IjkMediaPlayer_getVideoCodecInfo },
     { "_getAudioCodecInfo",     "()Ljava/lang/String;",     (void *) IjkMediaPlayer_getAudioCodecInfo },
     { "_getMediaMeta",          "()Landroid/os/Bundle;",    (void *) IjkMediaPlayer_getMediaMeta },
-    { "_readMediaMeta",         "(Ljava/lang/String;)Landroid/os/Bundle;",    (void *) IjkMediaPlayer_readMediaMeta },
+    { "_readMediaMeta",         "(Ljava/lang/String;Z)Landroid/os/Bundle;",    (void *) IjkMediaPlayer_readMediaMeta },
     { "_setLoopCount",          "(I)V",                     (void *) IjkMediaPlayer_setLoopCount },
     { "_getLoopCount",          "()I",                      (void *) IjkMediaPlayer_getLoopCount },
     { "_getPropertyFloat",      "(IF)F",                    (void *) ijkMediaPlayer_getPropertyFloat },

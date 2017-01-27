@@ -4142,20 +4142,7 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
     return ffp->meta;
 }
 
-IjkMediaMeta *ffp_read_meta(const char* filename) {
-    AVFormatContext *ic = avformat_alloc_context();
-    if (!ic) {
-        av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
-        return NULL;
-    }
-
-    int err = avformat_open_input(&ic, filename, NULL  /*format*/, NULL  /*format_opts*/);
-    if (err < 0) {
-        print_error(filename, err);
-        avformat_close_input(&ic);
-        return NULL;
-    }
-
+void ffp_read_stream_info_if_incomplete_data(AVFormatContext *ic) {
     bool found_size = false;
     for (int i = 0; i < ic->nb_streams; i++) {
         AVStream *st = ic->streams[i];
@@ -4174,20 +4161,41 @@ IjkMediaMeta *ffp_read_meta(const char* filename) {
                 break;
         }
     }
+    bool found_duration = (ic->duration != AV_NOPTS_VALUE);
 
     // Takes around 50ms extra compared to baseline of 10ms.
-    if (!found_size) {
-      ALOGD("Could not find size by default for file: %s. Finding stream info.", filename);
-      err = avformat_find_stream_info(ic, NULL);
+    if (!found_size || !found_duration) {
+      ALOGD("Finding stream info. Could not find size/duration by default."
+          " found_size = %d, found_dration = %d.", found_size, found_duration);
+      int err = avformat_find_stream_info(ic, NULL);
       if (err < 0) {
-          print_error(filename, err);
+          print_error("could not find stream info", err);
       }
+    }
+}
+IjkMediaMeta *ffp_read_meta(const char* filename, bool dont_read_stream_info) {
+    ALOGD("ffp_read_meta for file: %s", filename);
+
+    AVFormatContext *ic = avformat_alloc_context();
+    if (!ic) {
+        av_log(NULL, AV_LOG_FATAL, "Could not allocate context.\n");
+        return NULL;
+    }
+
+    int err = avformat_open_input(&ic, filename, NULL  /*format*/, NULL  /*format_opts*/);
+    if (err < 0) {
+        print_error(filename, err);
+        avformat_close_input(&ic);
+        return NULL;
+    }
+
+    if (!dont_read_stream_info) {
+        ffp_read_stream_info_if_incomplete_data(ic);
     }
 
     // Copy metadata from ic to IjkMediaMeta.
     IjkMediaMeta* meta = ijkmeta_create();
     ijkmeta_set_avformat_context_l(meta, ic);
-
 
     avformat_close_input(&ic);
     return meta;
