@@ -1041,7 +1041,7 @@ retry:
             lastvp = frame_queue_peek_last(&is->pictq);
             vp = frame_queue_peek(&is->pictq);
 
-            if (vp->serial != is->videoq.serial && frame_queue_nb_remaining(&is->pictq) > 1) {
+            if (vp->serial != is->videoq.serial) {
                 frame_queue_next(&is->pictq);
                 goto retry;
             }
@@ -2682,7 +2682,7 @@ static int read_thread(void *arg)
             continue;
         }
 #endif
-        if (is->seek_req) {
+        if (is->seek_req && !is->step) {
             int64_t seek_target = is->seek_pos;
             int64_t seek_min    = is->seek_rel > 0 ? seek_target - is->seek_rel + 2: INT64_MIN;
             int64_t seek_max    = is->seek_rel < 0 ? seek_target - is->seek_rel - 2: INT64_MAX;
@@ -2716,7 +2716,15 @@ static int read_thread(void *arg)
                 if (is->seek_flags & AVSEEK_FLAG_BYTE) {
                    set_clock(&is->extclk, NAN, 0);
                 } else {
-                   set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);
+                   // NKSG: external clock is not used generally (audio clock is the master clock).
+                   // In videos without audio stream, external clock is the master. The commented
+                   // code used to move the master clock ahead, which caused videos frames to be
+                   // displayed quickly till video clock catches up with master clock. We, instead
+                   // invalidate the master clock here, it is then updated using video clock
+                   // automatically when displaying the next frame.
+
+                   // set_clock(&is->extclk, seek_target / (double)AV_TIME_BASE, 0);
+                   set_clock(&is->extclk, NAN, 0);
                 }
 
                 is->latest_seek_load_serial = is->videoq.serial;
@@ -2867,7 +2875,8 @@ static int read_thread(void *arg)
             }
             if (is->eof) {
                 ffp_toggle_buffering(ffp, 0);
-                SDL_Delay(100);
+                // Reduce sleep to to listen to seek events sooner.
+                SDL_Delay(10);
             }
             SDL_LockMutex(wait_mutex);
             SDL_CondWaitTimeout(is->continue_read_thread, wait_mutex, 10);

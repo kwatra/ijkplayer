@@ -69,9 +69,12 @@ static IJKFF_Pipenode *func_open_video_decoder(IJKFF_Pipeline *pipeline, FFPlaye
     IJKFF_Pipeline_Opaque *opaque = pipeline->opaque;
     IJKFF_Pipenode        *node = NULL;
 
-    if (ffp->mediacodec_all_videos || ffp->mediacodec_avc || ffp->mediacodec_hevc || ffp->mediacodec_mpeg2)
+    if (ffp->mediacodec_all_videos || ffp->mediacodec_avc || ffp->mediacodec_hevc || ffp->mediacodec_mpeg2) {
+        ALOGD("amediacodec-pipeline:open_video_decoder: trying mediacodec");
         node = ffpipenode_create_video_decoder_from_android_mediacodec(ffp, pipeline, opaque->weak_vout);
+    }
     if (!node) {
+        ALOGD("amediacodec-pipeline:open_video_decoder: not using mediacodec");
         node = ffpipenode_create_video_decoder_from_ffplay(ffp);
     }
 
