@@ -6,11 +6,12 @@ import android.media.MediaCodecInfo.CodecCapabilities;
 import android.media.MediaCodecInfo.CodecProfileLevel;
 import android.os.Build;
 import android.text.TextUtils;
-import android.util.Log;
 
 import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
+
+import tv.danmaku.ijk.media.player.pragma.DebugLog;
 
 public class IjkMediaCodecInfo {
     private final static String TAG = "IjkMediaCodecInfo";
@@ -216,11 +217,11 @@ public class IjkMediaCodecInfo {
                 }
             }
 
-            Log.i(TAG,
+            DebugLog.i(TAG,
                     String.format(Locale.US, "%s",
                             getProfileLevelName(maxProfile, maxLevel)));
         } catch (Throwable e) {
-            Log.i(TAG, "profile-level: exception");
+            DebugLog.i(TAG, "profile-level: exception");
         }
     }
 
