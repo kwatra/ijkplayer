@@ -615,6 +615,8 @@ fillMediaMeta(JNIEnv *env, IjkMediaMeta *meta)
     fillMetaInternal(env, jlocal_bundle, meta, IJKM_KEY_START_US, NULL );
     fillMetaInternal(env, jlocal_bundle, meta, IJKM_KEY_BITRATE, NULL );
 
+    fillMetaInternal(env, jlocal_bundle, meta, IJKM_KEY_TITLE, NULL );
+
     fillMetaInternal(env, jlocal_bundle, meta, IJKM_KEY_VIDEO_STREAM, "-1");
     fillMetaInternal(env, jlocal_bundle, meta, IJKM_KEY_AUDIO_STREAM, "-1");
 

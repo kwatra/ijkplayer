@@ -191,6 +191,14 @@ void ijkmeta_set_avformat_context_l(IjkMediaMeta *meta, AVFormatContext *ic)
     if (ic->bit_rate)
         ijkmeta_set_int64_l(meta, IJKM_KEY_BITRATE, ic->bit_rate);
 
+
+    if (ic->metadata) {
+        AVDictionaryEntry *title_entry = av_dict_get(ic->metadata, "title", NULL, 0);
+        if (title_entry && title_entry->value) {
+            ijkmeta_set_string_l(meta, IJKM_KEY_TITLE, title_entry->value);
+        }
+    }
+
     IjkMediaMeta *stream_meta = NULL;
     int video_stream_index = -1;
     int audio_stream_index = -1;

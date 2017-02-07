@@ -13,6 +13,7 @@ public class IjkMediaMeta {
     public static final String IJKM_KEY_DURATION_US = "duration_us";
     public static final String IJKM_KEY_START_US = "start_us";
     public static final String IJKM_KEY_BITRATE = "bitrate";
+    public static final String IJKM_KEY_TITLE = "title";
     public static final String IJKM_KEY_VIDEO_STREAM = "video";
     public static final String IJKM_KEY_AUDIO_STREAM = "audio";
 
@@ -134,6 +135,7 @@ public class IjkMediaMeta {
     public long mDurationUS;
     public long mStartUS;
     public long mBitrate;
+    public String mTitle;
 
     public final ArrayList<IjkStreamMeta> mStreams = new ArrayList<IjkStreamMeta>();
     public IjkStreamMeta mVideoStream;
@@ -200,6 +202,7 @@ public class IjkMediaMeta {
         meta.mDurationUS = meta.getLong(IJKM_KEY_DURATION_US);
         meta.mStartUS = meta.getLong(IJKM_KEY_START_US);
         meta.mBitrate = meta.getLong(IJKM_KEY_BITRATE);
+        meta.mTitle = meta.getString(IJKM_KEY_TITLE);
 
         int videoStreamIndex = meta.getInt(IJKM_KEY_VIDEO_STREAM, -1);
         int audioStreamIndex = meta.getInt(IJKM_KEY_AUDIO_STREAM, -1);

@@ -31,6 +31,7 @@
 #define IJKM_KEY_DURATION_US    "duration_us"
 #define IJKM_KEY_START_US       "start_us"
 #define IJKM_KEY_BITRATE        "bitrate"
+#define IJKM_KEY_TITLE          "title"
 #define IJKM_KEY_VIDEO_STREAM   "video"
 #define IJKM_KEY_AUDIO_STREAM   "audio"
 
