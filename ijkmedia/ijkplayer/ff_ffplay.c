@@ -4151,7 +4151,7 @@ IjkMediaMeta *ffp_get_meta_l(FFPlayer *ffp)
     return ffp->meta;
 }
 
-void ffp_read_stream_info_if_incomplete_data(AVFormatContext *ic) {
+static void ffp_read_stream_info_if_incomplete_data(AVFormatContext *ic) {
     bool found_size = false;
     for (int i = 0; i < ic->nb_streams; i++) {
         AVStream *st = ic->streams[i];
@@ -4182,6 +4182,7 @@ void ffp_read_stream_info_if_incomplete_data(AVFormatContext *ic) {
       }
     }
 }
+
 IjkMediaMeta *ffp_read_meta(const char* filename, bool dont_read_stream_info) {
     ALOGD("ffp_read_meta for file: %s", filename);
 
@@ -4208,6 +4209,241 @@ IjkMediaMeta *ffp_read_meta(const char* filename, bool dont_read_stream_info) {
 
     avformat_close_input(&ic);
     return meta;
+}
+
+static const int TARGET_IMAGE_FORMAT = AV_PIX_FMT_RGB24;
+static const int TARGET_IMAGE_CODEC = AV_CODEC_ID_PNG;
+
+static int convert_image(AVStream *video_st, AVFrame *in_frame, int width, int height, AVPacket *pkt) {
+    ALOGD("convert_image() requested_size (%d, %d)", width, height);
+    AVCodec *targetCodec = NULL;
+    AVCodecContext *targetCodecCtx = NULL;
+    struct SwsContext *sws_ctx = NULL;
+    AVFrame *frame = NULL;
+    void *buffer = NULL;
+    bool success = false;
+
+    // TODO: Use sar ? See: https://gnunet.org/svn/Extractor/src/plugins/thumbnailffmpeg_extractor.c
+    double aspectRatio = (double) video_st->codecpar->width / video_st->codecpar->height;
+    ALOGD("aspect ratio %f", aspectRatio);
+    if (width < 0 && height < 0) {
+        width = video_st->codecpar->width;
+        height = video_st->codecpar->height;
+    } else if (height < 0) {
+        height = width / aspectRatio;
+    } else if (width < 0) {
+        width = height * aspectRatio;
+    }
+    // Output resolution must be a multiple of two
+    width = width / 2 * 2;
+    height = height / 2 * 2;
+    ALOGD("computed_size (%d, %d)", width, height);
+
+    targetCodec = avcodec_find_encoder(TARGET_IMAGE_CODEC);
+    if (!targetCodec) {
+        ALOGE("avcodec_find_decoder() failed to find encoder");
+        goto fail;
+    }
+
+    targetCodecCtx = avcodec_alloc_context3(targetCodec);
+    if (!targetCodecCtx) {
+        ALOGE("avcodec_alloc_context3 failed");
+        goto fail;
+    }
+
+    // targetCodecCtx->bit_rate = video_st->codecpar->bit_rate;
+    targetCodecCtx->width = width;
+    targetCodecCtx->height = height;
+    targetCodecCtx->pix_fmt = TARGET_IMAGE_FORMAT;
+    // targetCodecCtx->codec_type = AVMEDIA_TYPE_VIDEO;
+    targetCodecCtx->time_base.num = video_st->time_base.num;
+    targetCodecCtx->time_base.den = video_st->time_base.den;
+
+    if (avcodec_open2(targetCodecCtx, targetCodec, NULL) < 0) {
+        ALOGE("avcodec_open2() failed");
+        goto fail;
+    }
+
+    sws_ctx = sws_getContext(
+        video_st->codecpar->width,
+        video_st->codecpar->height,
+        video_st->codecpar->format,
+        targetCodecCtx->width,
+        targetCodecCtx->height,
+        TARGET_IMAGE_FORMAT,
+        SWS_BILINEAR,
+        NULL,
+        NULL,
+        NULL
+    );
+
+    if (!sws_ctx) {
+        ALOGE("sws_getContext failed");
+        goto fail;
+    }
+
+    frame = av_frame_alloc();
+    if (!frame) {
+        ALOGE("av_frame_alloc failed");
+        goto fail;
+    }
+
+    // Determine required buffer size and allocate buffer
+    int numBytes = avpicture_get_size(TARGET_IMAGE_FORMAT, targetCodecCtx->width, targetCodecCtx->height);
+    buffer = (uint8_t *)av_malloc(numBytes * sizeof(uint8_t));
+
+    // set the frame parameters
+    frame->format = TARGET_IMAGE_FORMAT;
+    frame->width = targetCodecCtx->width;
+    frame->height = targetCodecCtx->height;
+
+    avpicture_fill(
+        (AVPicture *) frame,
+        buffer,
+        TARGET_IMAGE_FORMAT,
+        targetCodecCtx->width,
+        targetCodecCtx->height
+    );
+
+    sws_scale(
+        sws_ctx,
+        (const uint8_t * const *) in_frame->data,
+        in_frame->linesize,
+        0,
+        in_frame->height,
+        frame->data,
+        frame->linesize
+    );
+
+    int got_packet = 0;
+    int ret = avcodec_encode_video2(targetCodecCtx, pkt, frame, &got_packet);
+    // For our encoding format, we know that that got_packet should be true on
+    // every call.
+    if (ret < 0 || !got_packet) {
+        ALOGE("Failed to encode %d: %d", ret, got_packet);
+        av_packet_unref(pkt);
+        goto fail;
+    } else {
+        success = true;
+    }
+
+fail:
+    if (buffer) free(buffer);
+    if (frame) av_frame_free(&frame);
+    if (sws_ctx) sws_freeContext(sws_ctx);
+    if (targetCodecCtx) avcodec_free_context(&targetCodecCtx);
+    return success ? 0 : -1;
+}
+
+int ffp_get_frame_at(const char* filename, long msec, int width, int height, AVPacket *pkt) {
+    ALOGD("ffp_get_frame_at for file: %s", filename);
+    AVFormatContext *pFormatCtx = NULL;
+    AVCodecContext *pCodecCtx = NULL;
+    AVFrame *frame = NULL;
+    bool success = false;
+
+    // Open video file
+    if (avformat_open_input(&pFormatCtx, filename, NULL, NULL) != 0) {
+        ALOGE("Couldn't open file");
+        goto fail;
+    }
+
+    // Retrieve stream information
+    if (avformat_find_stream_info(pFormatCtx, NULL) < 0) {
+        ALOGE("Couldn't find stream info");
+        goto fail;
+    }
+
+    // Dump information about file onto standard error
+    // av_dump_format(pFormatCtx, 0, filename, 0);
+
+    // Find the first video stream
+    int video_stream_idx = -1;
+    for (int i = 0; i < pFormatCtx->nb_streams; i++) {
+        if (pFormatCtx->streams[i]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO) {
+            video_stream_idx = i;
+            break;
+        }
+    }
+
+    if (video_stream_idx == -1) {
+        ALOGE("Couldn't find video stream");
+        goto fail;
+    }
+    AVStream *video_st = pFormatCtx->streams[video_stream_idx];
+
+    pCodecCtx = avcodec_alloc_context3(NULL);
+    if (!pCodecCtx) {
+        ALOGE("avcodec_alloc_context3 failed");
+        goto fail;
+    }
+    if (avcodec_parameters_to_context(pCodecCtx, video_st->codecpar) < 0) {
+        ALOGE("avcodec_parameters_to_context failed");
+        goto fail;
+    }
+    av_codec_set_pkt_timebase(pCodecCtx, video_st->time_base);
+
+    // Find the decoder for the video stream
+    AVCodec *pCodec = avcodec_find_decoder(pCodecCtx->codec_id);
+    if (pCodec == NULL) {
+        ALOGE("Codec not found for id %d", pCodecCtx->codec_id);
+        goto fail;
+    }
+
+    // Open codec
+    if (avcodec_open2(pCodecCtx, pCodec, NULL) < 0) {
+        ALOGE("Couldn't open codec");
+        goto fail;
+    }
+
+    // Seek to msec
+    if (msec > 0) {
+        int64_t seek_pos = milliseconds_to_fftime(msec);
+        if (avformat_seek_file(pFormatCtx, -1, INT64_MIN, seek_pos, INT64_MAX, 0) < 0) {
+            ALOGE("Couldn't seek");
+            goto fail;
+        }
+    }
+
+    // Allocate video frame
+    frame = av_frame_alloc();
+    if (!frame) {
+        ALOGE("Couldn't allocate avframe");
+        goto fail;
+    }
+    int got_frame = 0;
+    while (av_read_frame(pFormatCtx, pkt) >= 0) {
+        // ALOGD("NKSG: got pkt pts: %lld, stream_index: %d", pkt->pts, pkt->stream_index);
+        // Is this a packet from the video stream
+        if (pkt->stream_index == video_stream_idx) {
+            // Decode video frame
+            if (avcodec_decode_video2(pCodecCtx, frame, &got_frame, pkt) < 0) {
+                ALOGE("Decode failed");
+                break;
+            }
+
+            // Did we get a video frame?
+            if (got_frame) {
+                if (pkt->data) {
+                    av_packet_unref(pkt);
+                }
+                av_init_packet(pkt);
+                // For now, ignore the actual @msec and just grab the first frame after seek.
+                if (convert_image(video_st, frame, width, height, pkt) < 0) {
+                    ALOGE("Convert frame to image failed");
+                } else {
+                    success = true;
+                }
+                break;
+            }
+        }
+    }
+
+fail:
+    if (frame) av_frame_free(&frame);
+    if (pCodecCtx) avcodec_free_context(&pCodecCtx);
+    if (pFormatCtx) avformat_close_input(&pFormatCtx);
+    return (success) ? 0 : -1;
 }
 
 int ffp_update_mute_l(FFPlayer *ffp, bool mute_on)

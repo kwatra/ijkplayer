@@ -1,1 +1,1 @@
-module-default.sh
+module-vingo-android.sh

@@ -712,10 +712,45 @@ IjkMediaPlayer_readMediaMeta(JNIEnv *env, jobject thiz, jstring filename, jboole
 
     ijkmeta_destroy_p(&meta);
     if (c_filename) {
-      (*env)->ReleaseStringUTFChars(env, filename, c_filename);
+        (*env)->ReleaseStringUTFChars(env, filename, c_filename);
     }
 
     return jret_bundle;
+}
+
+static jbyteArray
+IjkMediaPlayer_getFrameAt(JNIEnv *env, jobject thiz, jstring filename, jlong timeMs, jint width, jint height)
+{
+    MPTRACE("%s\n", __func__);
+
+    const char *c_filename = (*env)->GetStringUTFChars(env, filename, NULL);
+    AVPacket packet;
+    av_init_packet(&packet);
+    jbyteArray array = NULL;
+
+    if (ijkmp_get_frame_at(c_filename, timeMs, width, height, &packet) == 0) {
+        int size = packet.size;
+        uint8_t *data = packet.data;
+        array = (*env)->NewByteArray(env, size);
+        ALOGD("Got thumbnail size %d", size);
+        if (!array) {
+            // Out of Memory exception has already been thrown ??
+            ALOGE("Unable to allocate array of size %d", size);
+        } else {
+            jbyte* bytes = (*env)->GetByteArrayElements(env, array, NULL);
+            if (bytes != NULL) {
+                memcpy(bytes, data, size);
+                (*env)->ReleaseByteArrayElements(env, array, bytes, 0);
+            }
+        }
+    }
+
+    if (c_filename) {
+        (*env)->ReleaseStringUTFChars(env, filename, c_filename);
+    }
+
+    av_packet_unref(&packet);
+    return array;
 }
 
 static void
@@ -1061,6 +1096,7 @@ static JNINativeMethod g_methods[] = {
     { "_getAudioCodecInfo",     "()Ljava/lang/String;",     (void *) IjkMediaPlayer_getAudioCodecInfo },
     { "_getMediaMeta",          "()Landroid/os/Bundle;",    (void *) IjkMediaPlayer_getMediaMeta },
     { "_readMediaMeta",         "(Ljava/lang/String;Z)Landroid/os/Bundle;",    (void *) IjkMediaPlayer_readMediaMeta },
+    { "_getFrameAt",            "(Ljava/lang/String;JII)[B",    (void *) IjkMediaPlayer_getFrameAt},
     { "_setLoopCount",          "(I)V",                     (void *) IjkMediaPlayer_setLoopCount },
     { "_getLoopCount",          "()I",                      (void *) IjkMediaPlayer_getLoopCount },
     { "_getPropertyFloat",      "(IF)F",                    (void *) ijkMediaPlayer_getPropertyFloat },

@@ -22,6 +22,8 @@ import android.annotation.TargetApi;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.SurfaceTexture;
 import android.media.MediaCodecInfo;
 import android.media.MediaCodecList;
@@ -868,6 +870,16 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         return _readMediaMeta(filename, dont_read_stream_info);
     }
     private static native Bundle _readMediaMeta(String filename, boolean dont_read_stream_info);
+
+    public static Bitmap getFrameAt(String filename, long timeMs, int width, int height) {
+        BitmapFactory.Options bitmapOptions = new BitmapFactory.Options();
+        byte[] picture = _getFrameAt(filename, timeMs, width, height);
+        if (picture != null) {
+            return BitmapFactory.decodeByteArray(picture, 0, picture.length, bitmapOptions);
+        }
+        return null;
+    }
+    private static native byte[] _getFrameAt(String filename, long timeMs, int width, int height);
 
     public static String getColorFormatName(int mediaCodecColorFormat) {
         return _getColorFormatName(mediaCodecColorFormat);

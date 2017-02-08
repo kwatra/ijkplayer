@@ -269,6 +269,14 @@ IjkMediaMeta *ijkmp_read_meta(const char* filename, bool dont_read_stream_info)
     return ret;
 }
 
+int ijkmp_get_frame_at(const char* filename, long msec, int width, int height, AVPacket *pkt)
+{
+    MPTRACE("%s\n", __func__);
+    int ret = ffp_get_frame_at(filename, msec, width, height, pkt);
+    MPTRACE("%s()=void\n", __func__);
+    return ret;
+}
+
 void ijkmp_shutdown_l(IjkMediaPlayer *mp)
 {
     assert(mp);
@@ -578,11 +586,11 @@ int ijkmp_seek_to(IjkMediaPlayer *mp, long msec)
 static int ijkmp_update_mute_l(IjkMediaPlayer *mp, bool mute_on)
 {
     assert(mp);
-    
+
     ffp_remove_msg(mp->ffplayer, FFP_REQ_MUTE);
     ffp_remove_msg(mp->ffplayer, FFP_REQ_UNMUTE);
     ffp_notify_msg1(mp->ffplayer, mute_on ? FFP_REQ_MUTE: FFP_REQ_UNMUTE);
-    
+
     return 0;
 }
 
@@ -780,21 +788,21 @@ int ijkmp_get_msg(IjkMediaPlayer *mp, AVMessage *msg, int block)
             }
             pthread_mutex_unlock(&mp->mutex);
             break;
-                
+
         case FFP_REQ_MUTE:
             MPTRACE("ijkmp_get_msg: FFP_REQ_MUTE\n");
             pthread_mutex_lock(&mp->mutex);
             ffp_update_mute_l(mp->ffplayer, true);
             pthread_mutex_unlock(&mp->mutex);
             break;
-                
+
         case FFP_REQ_UNMUTE:
             MPTRACE("ijkmp_get_msg: FFP_REQ_UNMUTE\n");
             pthread_mutex_lock(&mp->mutex);
             ffp_update_mute_l(mp->ffplayer, false);
             pthread_mutex_unlock(&mp->mutex);
             break;
-                
+
         }
 
         if (continue_wait_next_msg)

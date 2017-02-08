@@ -182,6 +182,8 @@ void            ijkmp_set_property_int64(IjkMediaPlayer *mp, int id, int64_t val
 IjkMediaMeta   *ijkmp_get_meta_l(IjkMediaPlayer *mp);
 IjkMediaMeta   *ijkmp_read_meta(const char* filename, bool dont_read_stream_info);
 
+int             ijkmp_get_frame_at(const char* filename, long msec, int width, int height, AVPacket *pkt);
+
 // preferred to be called explicity, can be called multiple times
 // NOTE: ijkmp_shutdown may block thread
 void            ijkmp_shutdown(IjkMediaPlayer *mp);
