@@ -4008,6 +4008,12 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
     codecpar = ic->streams[stream]->codecpar;
 
     if (selected) {
+        int paused = ffp_is_paused_l(ffp);
+        if (!paused) {
+          ffp_pause_l(ffp);
+        }
+
+        long current_position = ffp_get_current_position_l(ffp); 
         switch (codecpar->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
                 if (stream != is->video_stream && is->video_stream >= 0)
@@ -4021,7 +4027,13 @@ int ffp_set_stream_selected(FFPlayer *ffp, int stream, int selected)
                 av_log(ffp, AV_LOG_ERROR, "select invalid stream %d of video type %d\n", stream, codecpar->codec_type);
                 return -1;
         }
-        return stream_component_open(ffp, stream);
+        int ret = stream_component_open(ffp, stream);
+
+        ffp_seek_to_l(ffp, current_position);
+        if (!paused) {
+          ffp_start_l(ffp);
+        }
+        return ret;
     } else {
         switch (codecpar->codec_type) {
             case AVMEDIA_TYPE_VIDEO:
