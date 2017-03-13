@@ -194,6 +194,27 @@ LABEL_RETURN:
 }
 
 static void
+IjkMediaPlayer_setWantedStreamSpec(
+    JNIEnv *env, jobject thiz, jint stream_type, jstring stream_spec)
+{
+    MPTRACE("%s\n", __func__);
+    const char *c_stream_spec = NULL;
+    IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
+    JNI_CHECK_GOTO(stream_spec, env, "java/lang/IllegalArgumentException", "mpjni: setWantedStreamSpec: null stream_spec", LABEL_RETURN);
+    JNI_CHECK_GOTO(mp, env, "java/lang/IllegalStateException", "mpjni: setWantedStreamSpec: null mp", LABEL_RETURN);
+
+    c_stream_spec = (*env)->GetStringUTFChars(env, stream_spec, NULL );
+    JNI_CHECK_GOTO(c_stream_spec, env, "java/lang/OutOfMemoryError", "mpjni: setWantedStreamSpec: stream_spec.string oom", LABEL_RETURN);
+
+    ALOGV("setWantedStreamSpec: stream_type: %d, stream_spec %s", stream_type, c_stream_spec);
+    ijkmp_set_wanted_stream_spec(mp, stream_type, c_stream_spec);
+    (*env)->ReleaseStringUTFChars(env, stream_spec, c_stream_spec);
+
+LABEL_RETURN:
+    ijkmp_dec_ref_p(&mp);
+}
+
+static void
 IjkMediaPlayer_setVideoSurface(JNIEnv *env, jobject thiz, jobject jsurface)
 {
     MPTRACE("%s\n", __func__);
@@ -1070,7 +1091,7 @@ static JNINativeMethod g_methods[] = {
     },
     { "_setDataSourceFd",       "(I)V",     (void *) IjkMediaPlayer_setDataSourceFd },
     { "_setDataSource",         "(Ltv/danmaku/ijk/media/player/misc/IMediaDataSource;)V", (void *)IjkMediaPlayer_setDataSourceCallback },
-
+    { "_setWantedStreamSpec",   "(ILjava/lang/String;)V", (void *) IjkMediaPlayer_setWantedStreamSpec},
     { "_setVideoSurface",       "(Landroid/view/Surface;)V", (void *) IjkMediaPlayer_setVideoSurface },
     { "_prepareAsync",          "()V",      (void *) IjkMediaPlayer_prepareAsync },
     { "_start",                 "()V",      (void *) IjkMediaPlayer_start },

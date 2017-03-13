@@ -359,6 +359,17 @@ int ijkmp_set_data_source(IjkMediaPlayer *mp, const char *url)
     return retval;
 }
 
+void ijkmp_set_wanted_stream_spec(IjkMediaPlayer *mp, int stream_type, const char *stream_spec)
+{
+    assert(mp);
+    assert(stream_spec);
+    MPTRACE("ijkmp_set_wanted_stream_spec(stream_type=%d, stream_spec=\"%s\")\n", stream_type, stream_spec);
+    pthread_mutex_lock(&mp->mutex);
+    ffp_set_wanted_stream_spec_l(mp->ffplayer, stream_type, stream_spec);
+    pthread_mutex_unlock(&mp->mutex);
+    MPTRACE("ijkmp_set_wanted_stream_spec(stream_type=%d, stream_spec=\"%s\")=\n", stream_type, stream_spec);
+}
+
 static int ijkmp_msg_loop(void *arg)
 {
     IjkMediaPlayer *mp = arg;

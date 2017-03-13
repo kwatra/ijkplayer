@@ -196,6 +196,7 @@ void            ijkmp_dec_ref(IjkMediaPlayer *mp);
 void            ijkmp_dec_ref_p(IjkMediaPlayer **pmp);
 
 int             ijkmp_set_data_source(IjkMediaPlayer *mp, const char *url);
+void            ijkmp_set_wanted_stream_spec(IjkMediaPlayer *mp, int stream_type, const char *stream_spec);
 int             ijkmp_prepare_async(IjkMediaPlayer *mp);
 int             ijkmp_start(IjkMediaPlayer *mp);
 int             ijkmp_pause(IjkMediaPlayer *mp);

@@ -484,6 +484,11 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
         return mDataSource;
     }
 
+    public void setWantedStreamSpec(int streamType, String streamSpec) {
+        _setWantedStreamSpec(streamType, streamSpec);
+    }
+    private native void _setWantedStreamSpec(int stream_type, String stream_spec);
+
     @Override
     public void prepareAsync() throws IllegalStateException {
         _prepareAsync();

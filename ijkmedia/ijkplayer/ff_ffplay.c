@@ -3384,6 +3384,18 @@ void ffp_set_option_int(FFPlayer *ffp, int opt_category, const char *name, int64
     av_dict_set_int(dict, name, value, 0);
 }
 
+void ffp_set_wanted_stream_spec_l(FFPlayer *ffp, int stream_type, const char *stream_spec)
+{
+    if (!ffp)
+        return;
+
+    ALOGD("ffp_set_wanted_stream_spec(stream_type=%d, stream_spec=\"%s\"), before value wanted_stream_spec: %s\n",
+        stream_type, stream_spec, ffp->wanted_stream_spec[stream_type]);
+    char *stream_spec_copy = malloc(strlen(stream_spec) + 1);
+    strcpy(stream_spec_copy, stream_spec);
+    ffp->wanted_stream_spec[stream_type] = stream_spec_copy;
+}
+
 void ffp_set_overlay_format(FFPlayer *ffp, int chroma_fourcc)
 {
     switch (chroma_fourcc) {
