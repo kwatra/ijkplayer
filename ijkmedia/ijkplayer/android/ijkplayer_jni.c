@@ -485,6 +485,19 @@ LABEL_RETURN:
     ijkmp_dec_ref_p(&mp);
 }
 
+static void
+IjkMediaPlayer_updateMute(JNIEnv *env, jobject thiz, jboolean mute_on)
+{
+    MPTRACE("%s\n", __func__);
+    IjkMediaPlayer *mp = jni_get_media_player(env, thiz);
+    JNI_CHECK_GOTO(mp, env, NULL, "mpjni: setVolume: null mp", LABEL_RETURN);
+
+    ijkmp_update_mute(mp, mute_on);
+
+LABEL_RETURN:
+    ijkmp_dec_ref_p(&mp);
+}
+
 static jint
 IjkMediaPlayer_getAudioSessionId(JNIEnv *env, jobject thiz)
 {
@@ -1104,6 +1117,7 @@ static JNINativeMethod g_methods[] = {
     { "_release",               "()V",      (void *) IjkMediaPlayer_release },
     { "_reset",                 "()V",      (void *) IjkMediaPlayer_reset },
     { "setVolume",              "(FF)V",    (void *) IjkMediaPlayer_setVolume },
+    { "updateMute",             "(Z)V",     (void *) IjkMediaPlayer_updateMute},
     { "getAudioSessionId",      "()I",      (void *) IjkMediaPlayer_getAudioSessionId },
     { "native_init",            "()V",      (void *) IjkMediaPlayer_native_init },
     { "native_setup",           "(Ljava/lang/Object;)V", (void *) IjkMediaPlayer_native_setup },

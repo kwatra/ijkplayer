@@ -802,6 +802,8 @@ public final class IjkMediaPlayer extends AbstractMediaPlayer {
     @Override
     public native int getAudioSessionId();
 
+    public native void updateMute(boolean muteOn);
+
     @Override
     public MediaInfo getMediaInfo() {
         MediaInfo mediaInfo = new MediaInfo();
